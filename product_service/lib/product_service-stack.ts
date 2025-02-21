@@ -22,6 +22,22 @@ export class ProductServiceStack extends cdk.Stack {
 
     const productsApi = new apigateway.RestApi(this, 'ProductsListApi', {
       restApiName: 'Product Service',
+      defaultCorsPreflightOptions: {
+        allowOrigins: [
+          'https://d199avi2jaj1jp.cloudfront.net',
+          'http://localhost:3000',
+          'https://editor.swagger.io',
+        ],
+        allowMethods: ["GET", "OPTIONS"],
+        allowHeaders: [
+          "Content-Type",
+          "X-Amz-Date",
+          "Authorization",
+          "X-Api-Key",
+          "X-Amz-Security-Token",
+        ],
+        allowCredentials: true,
+      }
     });
 
     const productsResource = productsApi.root.addResource('products');
@@ -29,6 +45,5 @@ export class ProductServiceStack extends cdk.Stack {
 
     const productByIdResource = productsResource.addResource('{productId}');
     productByIdResource.addMethod('GET', new apigateway.LambdaIntegration(getProductsByIdFunction));
-
   }
 }

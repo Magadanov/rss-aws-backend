@@ -1,0 +1,68 @@
+openapi: 3.0.3
+info:
+  title: Product Service
+  description: Product Service Swagger
+  version: 0.0.1
+servers:
+  - url: https://hvrfpq1erd.execute-api.eu-west-2.amazonaws.com/prod
+    description: Product Service HTTPS protocol
+paths:
+  /products:
+    get:
+      tags:
+        - Products
+      description: Retrieval of a products
+      operationId: products
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        default:
+          description: Unexpected error
+  /products/{productId}:
+    get:
+      tags:
+        - Products
+      summary: Retrieve a single product by ID
+      operationId: getProductById
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: ID of the product to retrieve
+          schema:
+            type: integer
+      responses:
+        200:
+          description: A single product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        404:
+          description: Product not found
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Product not found
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Apple
+        createdAt:
+          type: string
+          format: date
+          example: 2025-02-12
