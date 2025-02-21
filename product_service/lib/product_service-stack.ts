@@ -24,7 +24,7 @@ export class ProductServiceStack extends cdk.Stack {
       restApiName: 'Product Service',
       defaultCorsPreflightOptions: {
         allowOrigins: [
-          'https://d199avi2jaj1jp.cloudfront.net',
+          'https://d3636glrblu0ej.cloudfront.net',
           'http://localhost:3000',
           'https://editor.swagger.io',
         ],
