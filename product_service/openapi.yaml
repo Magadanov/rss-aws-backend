@@ -1,68 +1,125 @@
 openapi: 3.0.3
 info:
-  title: Product Service
-  description: Product Service Swagger
-  version: 0.0.1
+    title: Product Service
+    description: Product Service Swagger
+    version: 0.0.1
 servers:
-  - url: https://hvrfpq1erd.execute-api.eu-west-2.amazonaws.com/prod
-    description: Product Service HTTPS protocol
+    - url: https://92v1so5v6f.execute-api.eu-west-2.amazonaws.com/prod
+      description: Product Service HTTPS protocol
 paths:
-  /products:
-    get:
-      tags:
-        - Products
-      description: Retrieval of a products
-      operationId: products
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Product'
-        default:
-          description: Unexpected error
-  /products/{productId}:
-    get:
-      tags:
-        - Products
-      summary: Retrieve a single product by ID
-      operationId: getProductById
-      parameters:
-        - name: productId
-          in: path
-          required: true
-          description: ID of the product to retrieve
-          schema:
-            type: integer
-      responses:
-        200:
-          description: A single product
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Product'
-        404:
-          description: Product not found
-          content:
-            text/plain:
-              schema:
-                type: string
-                example: Product not found
+    /products:
+        get:
+            tags:
+                - Products
+            description: Retrieval of products
+            operationId: getProducts
+            responses:
+                200:
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/Product"
+                default:
+                    description: Unexpected error
+        post:
+            tags:
+                - Products
+            summary: Create a new product
+            operationId: createProduct
+            requestBody:
+                description: Product details for creation
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/CreateProductRequest"
+            responses:
+                201:
+                    description: Product created successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Product"
+                400:
+                    description: Invalid input
+                500:
+                    description: Internal server error
+
+    /products/{productId}:
+        get:
+            tags:
+                - Products
+            summary: Retrieve a single product by ID
+            operationId: getProductById
+            parameters:
+                - name: productId
+                  in: path
+                  required: true
+                  description: ID of the product to retrieve
+                  schema:
+                      type: string
+            responses:
+                200:
+                    description: A single product
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Product"
+                500:
+                    description: Internal Server error
+                    content:
+                        text/plain:
+                            schema:
+                                type: string
+                                example: Internal server error
+                404:
+                    description: Product not found
+                    content:
+                        text/plain:
+                            schema:
+                                type: string
+                                example: Product not found
+
 components:
-  schemas:
-    Product:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        title:
-          type: string
-          example: Apple
-        createdAt:
-          type: string
-          format: date
-          example: 2025-02-12
+    schemas:
+        Product:
+            type: object
+            properties:
+                id:
+                    type: string
+                    example: "abcewas-a0-ddsa-123"
+                title:
+                    type: string
+                    example: "Apple"
+                description:
+                    type: string
+                    example: "Smartphone"
+                price:
+                    type: number
+                    example: 900
+                count:
+                    type: integer
+                    example: 50
+
+        CreateProductRequest:
+            type: object
+            required:
+                - title
+                - price
+                - count
+            properties:
+                title:
+                    type: string
+                    example: "Apple"
+                price:
+                    type: number
+                    example: 900
+                description:
+                    type: string
+                    example: "Smartphone"
+                count:
+                    type: integer
+                    example: 50
