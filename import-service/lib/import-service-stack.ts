@@ -5,6 +5,7 @@ import * as s3 from "aws-cdk-lib/aws-s3";
 import * as apigateway from "aws-cdk-lib/aws-apigatewayv2";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as dotenv from "dotenv";
 import {
     NodejsFunction,
@@ -24,6 +25,12 @@ export class ImportServiceStack extends cdk.Stack {
             process.env.BUCKET_NAME as string
         );
 
+        const catalogItemsQueue = sqs.Queue.fromQueueArn(
+            this,
+            process.env.QUEUE_ID as string,
+            process.env.QUEUE_ARN as string
+        );
+
         const api = new apigateway.HttpApi(this, "ImportHttpApi", {
             corsPreflight: {
                 allowOrigins: ["*"],
@@ -37,6 +44,7 @@ export class ImportServiceStack extends cdk.Stack {
         const sharedLambdaProps: NodejsFunctionProps = {
             environment: {
                 BUCKET_NAME: bucket.bucketName,
+                QUEUE_URL: catalogItemsQueue.queueUrl,
             },
             handler: "handler",
             runtime: lambda.Runtime.NODEJS_18_X,
@@ -72,6 +80,7 @@ export class ImportServiceStack extends cdk.Stack {
 
         bucket.grantReadWrite(importProductsFileFunction);
         bucket.grantReadWrite(importFileParserFunction);
+        catalogItemsQueue.grantSendMessages(importFileParserFunction);
 
         bucket.addEventNotification(
             s3.EventType.OBJECT_CREATED,

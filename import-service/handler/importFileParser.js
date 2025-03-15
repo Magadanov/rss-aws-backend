@@ -3,6 +3,7 @@ import * as AWS from "aws-sdk";
 import csvParser from "csv-parser";
 
 const bucket = new AWS.S3({ region: "eu-west-2" });
+const sqs = new AWS.SQS();
 
 exports.handler = async function (event) {
     console.log("ImportFileParser:", JSON.stringify(event));
@@ -26,6 +27,7 @@ async function processReadableStream(stream, record) {
             objectMode: true,
             transform(chunk, encoding, callback) {
                 console.log("csv file is parsing: ", JSON.stringify(chunk));
+                sendMessageToSQS(chunk);
                 callback();
             },
         });
@@ -73,4 +75,28 @@ async function processReadableStream(stream, record) {
             })
             .on("error", rej);
     });
+}
+
+function sendMessageToSQS(data) {
+    try {
+        const sendData = {
+            title: data.title,
+            description: data.description,
+            price: Number(data.price),
+            count: Number(data.count),
+        };
+        const params = {
+            QueueUrl: process.env.QUEUE_URL,
+            MessageBody: JSON.stringify(sendData),
+        };
+        sqs.sendMessage(params, (err, data) => {
+            if (err) {
+                console.error("Error while sending the message", err);
+            } else {
+                console.log("Message sent successfully", data.MessageId);
+            }
+        });
+    } catch {
+        console.error("Something error");
+    }
 }

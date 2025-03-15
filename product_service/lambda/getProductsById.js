@@ -1,4 +1,4 @@
-const { getCorsHeaders } = require("./httpHeader.js");
+const { getCorsHeaders } = require("./httpHeader");
 const AWS = require("aws-sdk");
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 
