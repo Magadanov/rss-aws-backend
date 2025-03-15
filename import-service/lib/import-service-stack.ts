@@ -24,7 +24,15 @@ export class ImportServiceStack extends cdk.Stack {
             process.env.BUCKET_NAME as string
         );
 
-        const api = new apigateway.HttpApi(this, "ImportHttpApi");
+        const api = new apigateway.HttpApi(this, "ImportHttpApi", {
+            corsPreflight: {
+                allowOrigins: ["*"],
+                allowMethods: [
+                    apigateway.CorsHttpMethod.GET,
+                    apigateway.CorsHttpMethod.OPTIONS,
+                ],
+            },
+        });
 
         const sharedLambdaProps: NodejsFunctionProps = {
             environment: {
@@ -36,13 +44,8 @@ export class ImportServiceStack extends cdk.Stack {
 
         const importFileParsePolicy = new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
-            actions: [
-                "s3:PutObject",
-                "s3:GetObject",
-                "s3:DeleteObject",
-                "s3:ListBucket",
-            ],
-            resources: [bucket.bucketArn, `${bucket.bucketArn}/*`],
+            actions: ["s3:CopyObject", "s3:DeleteObject"],
+            resources: [`${bucket.bucketArn}/*`],
         });
 
         const importProductsFileFunction = new NodejsFunction(
@@ -68,6 +71,7 @@ export class ImportServiceStack extends cdk.Stack {
         importFileParserFunction.addToRolePolicy(importFileParsePolicy);
 
         bucket.grantReadWrite(importProductsFileFunction);
+        bucket.grantReadWrite(importFileParserFunction);
 
         bucket.addEventNotification(
             s3.EventType.OBJECT_CREATED,
