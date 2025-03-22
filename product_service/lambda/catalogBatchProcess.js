@@ -15,6 +15,10 @@ exports.handler = async (event) => {
             try {
                 const body = JSON.parse(record.body);
                 const { body: eventBody, ...recordEvent } = event;
+                console.log("event", {
+                    ...recordEvent,
+                    body,
+                });
                 const { body: newProduct } = await createProduct.handler({
                     ...recordEvent,
                     body,

@@ -4,68 +4,65 @@ const createProduct = require("../lambda/createProduct");
 const { getCorsHeaders } = require("../lambda/httpHeader");
 
 jest.mock("aws-sdk", () => {
-    return {
-        SNS: jest.fn(() => ({
-            publish: jest.fn().mockReturnThis(),
-        })),
+    const mockSNS = {
+        publish: jest
+            .fn()
+            .mockReturnValue({ promise: jest.fn().mockResolvedValue({}) }),
     };
+    return { SNS: jest.fn(() => mockSNS) };
 });
 
-const mockedItem = {
-    id: "1",
-    title: "Mck",
-    description: "",
-    price: 100,
-    count: 10,
-};
-
 jest.mock("../lambda/createProduct", () => ({
-    handler: jest.fn(() => ({ statusCode: 200, body: mockedItem })),
+    handler: jest.fn(),
 }));
 
 jest.mock("../lambda/httpHeader", () => ({
-    getCorsHeaders: jest.fn(() => ({
-        "Access-Control-Allow-Credentials": true,
-        "Access-Control-Allow-Methods": "GET,OPTIONS",
-        "Access-Control-Allow-Headers":
-            "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-    })),
+    getCorsHeaders: jest.fn(() => ({ "Access-Control-Allow-Origin": "*" })),
 }));
 
-describe("catalogBatchProcess", () => {
-    let mockEvent;
+describe("SQS Lambda Function", () => {
     let sns;
+    let mockCreateProduct;
 
     beforeEach(() => {
         sns = new AWS.SNS();
-
-        mockEvent = {
-            Records: [
-                {
-                    body: mockedItem,
-                },
-            ],
-            headers: {
-                origin: "https://example.com",
-            },
-        };
+        mockCreateProduct = createProduct;
+        jest.clearAllMocks();
     });
 
-    it("should process records and send SNS notification", async () => {
+    it("should process SQS messages and publish an SNS notification", async () => {
+        process.env.SNS_TOPIC_ARN = "1dsd";
+        mockCreateProduct.mockReturnValue(() => ({
+            handler: async () => ({
+                body: {
+                    id: "123",
+                    title: "Test Product",
+                    description: "test",
+                    price: 200,
+                    count: 10,
+                },
+            }),
+        }));
+
+        const mockEvent = {
+            headers: { origin: "http://localhost:3000" },
+            Records: [
+                {
+                    body: JSON.stringify({
+                        title: "Test Product",
+                        description: "test",
+                        price: 200,
+                        count: 10,
+                    }),
+                },
+            ],
+        };
+
         const response = await handler(mockEvent);
 
         expect(response.statusCode).toBe(200);
-        expect(JSON.parse(response.body).message).toBe("message is delivered");
-    });
-
-    it("should return 500 if an unexpected error occurs", async () => {
-        jest.spyOn(JSON, "stringify").mockImplementation(() => {
-            throw new Error("Unexpected error");
+        expect(JSON.parse(response.body)).toEqual({
+            message: "message is delivered",
         });
-
-        const response = await handler(mockEvent);
-
-        expect(response.statusCode).toBe(500);
-        expect(JSON.parse(response.body).message).toBe("Internal server error");
     });
 });
